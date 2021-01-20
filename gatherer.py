@@ -5,11 +5,13 @@
 # Import
 from datetime import datetime
 from urllib import request
+import json
 
 # Get data and write it to a file
 date = datetime.today().strftime("%Y-%m-%d")
 with open(date + '.json', 'w') as output_file:
     request = request.urlopen('http://rbi.ddns.net/getBreadCrumbData')
+    the_parse = json.load(request)
     output_file.write(request.read().decode('utf-8'))
 
 # References (I may have been a little paranoid about citing here):
