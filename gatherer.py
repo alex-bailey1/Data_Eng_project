@@ -10,7 +10,7 @@ from confluent_kafka import Producer, KafkaError
 import ccloud_lib
 
 # Get data and write it to a file
-date = datetime.today().strftime("%Y-%m-%d")
+# date = datetime.today().strftime("%Y-%m-%d")
 # with open(date + '.json', 'w') as output_file:
 request = request.urlopen('http://rbi.ddns.net/getBreadCrumbData')
 the_parse = json.load(request)
