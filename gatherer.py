@@ -60,8 +60,9 @@ for record in the_parse:
     # p.poll() serves delivery reports (on_delivery)
     # from previous produce() calls.
     producer.poll(0)
+    producer.flush()
 
-producer.flush()
+
 
 print("finished")
 
