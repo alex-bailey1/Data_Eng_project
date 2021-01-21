@@ -7,7 +7,12 @@ from datetime import datetime
 from urllib import request
 import json
 from confluent_kafka import Producer, KafkaError
-import ccloud_lib
+# import ccloud_lib
+import importlib.util
+spec = importlib.util.spec_from_file_location("ccloud_lib.py", "/home/bail34/examples/clients/cloud/python/")
+foo = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(ccloud_lib)
+
 
 # Get data and write it to a file
 # date = datetime.today().strftime("%Y-%m-%d")
@@ -46,8 +51,8 @@ def acked(err, msg):
     """
     if err is not None:
         print("Failed to deliver message: {}".format(err))
-    else:
-        print("successfully delivered")
+    # else:
+        # print("successfully delivered")
         # delivered_records += 1
         # print("Produced record to topic {} partition [{}] @ offset {}"
                 # .format(msg.topic(), msg.partition(), msg.offset()))
@@ -55,7 +60,7 @@ def acked(err, msg):
 for record in the_parse:
     record_key = "bus_data"
     record_value = json.dumps(record)
-    # print("Producing record: {}\t{}".format(record_key, record_value))
+    # print("Producing record: {}\t{}".fodrmat(record_key, record_value))
     producer.produce(topic, key=record_key, value=record_value, on_delivery=acked)
     # p.poll() serves delivery reports (on_delivery)
     # from previous produce() calls.
@@ -79,3 +84,4 @@ print("finished")
 # https://docs.python.org/3/library/urllib.request.html#module-urllib.request
 # https://github.com/confluentinc/examples/blob/6.0.1-post/clients/cloud/python/producer.py
 # https://www.geeksforgeeks.org/read-write-and-parse-json-using-python/
+# https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
