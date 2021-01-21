@@ -8,11 +8,9 @@ from urllib import request
 import json
 from confluent_kafka import Producer, KafkaError
 # import ccloud_lib
-import importlib.util
-spec = importlib.util.spec_from_file_location("ccloud_lib.py", "/home/bail34/examples/clients/cloud/python/")
-foo = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(ccloud_lib)
-
+import sys
+sys.path.append("/home/bail34/examples/clients/cloud/python/")
+import ccloud_lib
 
 # Get data and write it to a file
 # date = datetime.today().strftime("%Y-%m-%d")
