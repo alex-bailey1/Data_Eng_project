@@ -7,7 +7,7 @@ import ccloud_lib
 if __name__ == '__main__':
 
     # Read arguments and configurations and initialize
-    config_file = "/home/bail34/.confluence/librdkafka.config"
+    config_file = "/.confluence/librdkafka.config"
     topic = "project_topic"
     conf = ccloud_lib.read_ccloud_config(config_file)
 
