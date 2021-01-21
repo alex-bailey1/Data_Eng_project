@@ -1,7 +1,7 @@
 from confluent_kafka import Consumer
 import json
 import sys
-sys.path.append("/home/bail34/examples/clients/cloud/python/")
+sys.path.append("/examples/clients/cloud/python/")
 import ccloud_lib
 
 if __name__ == '__main__':
