@@ -3,7 +3,7 @@
 # 1/13/2021
 
 # Import
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib import request
 import json
 from confluent_kafka import Producer, KafkaError
@@ -11,10 +11,12 @@ import sys
 sys.path.append("/home/bail34/examples/clients/cloud/python/")
 import ccloud_lib
 
-# Get data
+# Get data abd save it
 request = request.urlopen('http://rbi.ddns.net/getBreadCrumbData')
 the_parse = json.load(request)
-
+date = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+with open(date + '.json', 'w') as output_file:
+    json.dump(the_parse, output_file)
 
 # Read arguments and configurations and initialize
 config_file = "/home/bail34/.confluence/librdkafka.config"
@@ -71,3 +73,4 @@ print("finished")
 # producer code: https://github.com/confluentinc/examples/blob/6.0.1-post/clients/cloud/python/producer.py
 # https://www.geeksforgeeks.org/read-write-and-parse-json-using-python/
 # https://stackoverflow.com/questions/67631/how-to-import-a-module-given-the-full-path
+# https://stackoverflow.com/questions/441147/how-to-subtract-a-day-from-a-date
