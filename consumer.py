@@ -47,9 +47,9 @@ if __name__ == '__main__':
                 record_value = msg.value()
                 data = json.loads(record_value)
                 #print(data)
-                file = open("consumer_log.json", "a")
-                file.write(json.dump(record_value))
-                file.close()
+                file1 = open("/home/shengjia/consumer_log.json", "a")
+                json.dump(data, file1)
+                file1.close()
 
 
     except KeyboardInterrupt:
