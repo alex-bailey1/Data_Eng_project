@@ -46,12 +46,12 @@ if __name__ == '__main__':
                 record_key = msg.key()
                 record_value = msg.value()
                 data = json.loads(record_value)
-                print(data)
-                # count = data['count']
-                # total_count += count
-                # print("Consumed record with key {} and value {}, \
-                #       and updated total count to {}"
-                #       .format(record_key, record_value, total_count))
+                #print(data)
+                file = open("consumer_log.json", "a")
+                file.write(json.dump(record_value))
+                file.close()
+
+
     except KeyboardInterrupt:
         pass
     finally:
