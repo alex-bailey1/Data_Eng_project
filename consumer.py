@@ -8,25 +8,51 @@ import math
 import datetime
 
 def data_is_valid(data):
-    if(validate_event_no_trip_range):
+    # Check to see if the record passes all the checks. Return false if it doesn't
+    if (not valid_event_no_trip):
         return False
-    elif(validate_act_time_range(data)):
+    elif (not valid_event_no_trip_range):
         return False
-)
+    elif (not valid_act_time_range(data)):
+        return False
+    elif ()
+
+    return True
+
+# very tuple must have an EVENT_NO_TRIP
+# need to test
+def valid_event_no_trip(data):
+    if (data["EVENT_NO_TRIP"] is None or data["EVENT_NO_TRIP"] == "" or data["EVENT_NO_TRIP"] == 0):
+        return False
+    return True
+
+# Every EVENT_NO_TRIP should be above 140000000
+def valid_event_no_trip_range(data):
+    if(data["EVENT_NO_TRIP"] < 140000000):
+        return False
+    return True
 
 
-# Every EVNET_NO_TRIP should be above 140000000
-def validate_event_no_trip_range(data):
-        if(data["EVENT_NO_TRIP"] < 140000000):
-            return False
-        return True
+# Every tuple must have a VEHICLE_ID
+def valid_vehicle_id(data):
+    if (data["VEHICLE_ID"] is None or data["VEHICLE_ID"] == "" or data["VEHICLE_ID"] == 0):
+        return False
+    return True
 
-
-def validate_act_time_range(data):
+# ACT_TIME should be in the range 0-93600 (0-26 hours)
+def valid_act_time_range(data):
     if(data["ACT_TIME"] < 0 or data["ACT_TIME"] > 93600):
         return False
     return True
 
+# Every GPS_LATITUDE must have a corresponding GPS_LONGITUDE
+def gps_longitude_has_corresponding_lattitude(data):
+    if ((data["GPS_LATITUDE"] is not None and data["GPS_LATITUDE"] != 0) and
+        (data["GPS_LONGITUDE"] is None or data["GPS_LONGITUDE"] == 0)):
+        return False
+    return True
+
+# Write entry to database
 def write_to_db(data):
     return
 
