@@ -3,6 +3,32 @@ import json
 import sys
 sys.path.append("/examples/clients/cloud/python/")
 import ccloud_lib
+# import pandas as pd
+import math
+import datetime
+
+def data_is_valid(data):
+    if(validate_event_no_trip_range):
+        return False
+    elif(validate_act_time_range(data)):
+        return False
+)
+
+
+# Every EVNET_NO_TRIP should be above 140000000
+def validate_event_no_trip_range(data):
+        if(data["EVENT_NO_TRIP"] < 140000000):
+            return False
+        return True
+
+
+def validate_act_time_range(data):
+    if(data["ACT_TIME"] < 0 or data["ACT_TIME"] > 93600):
+        return False
+    return True
+
+def write_to_db(data):
+    return
 
 if __name__ == '__main__':
 
@@ -46,8 +72,12 @@ if __name__ == '__main__':
                 record_key = msg.key()
                 record_value = msg.value()
                 data = json.loads(record_value)
+                if(data_is_valid(data)):
+                    write_to_db(data)
+
                 #print(data)
                 file1 = open("/home/shengjia/consumer_log.json", "a")
+
                 json.dump(data, file1)
                 file1.close()
 

@@ -11,6 +11,9 @@ import sys
 sys.path.append("/home/bail34/examples/clients/cloud/python/")
 import ccloud_lib
 
+
+
+
 # Get data abd save it
 request = request.urlopen('http://rbi.ddns.net/getBreadCrumbData')
 the_parse = json.load(request)
@@ -45,6 +48,8 @@ def acked(err, msg):
     """
     if err is not None:
         print("Failed to deliver message: {}".format(err))
+
+
 
 
 for record in the_parse:
