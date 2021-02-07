@@ -15,8 +15,35 @@ def data_is_valid(data):
         return False
     elif (not valid_act_time_range(data)):
         return False
-    elif ()
+    elif (not valid_latitude(data)):
+        return False
+    elif (not valid_direction(data)):
+        return False
+    elif (not valid_vehicle_id(data)):
+        return False
+    elif (not gps_longitude_has_corresponding_lattitude(data)):
+        return False
+    elif (not valid_velocity(data)):
+        return False
 
+    return True
+
+# Velocity must be between 0 and 60 inclusive
+def valid_velocity(data):
+    if (data["VELOCITY"] < 0 or data["VELOCITY"] > 60):
+        return False
+    return True
+
+# Latitude must be between 45 and 47 inclusive
+def valid_latitude(data):
+    if (data["GPS_LATITUDE"] < 45 or data["GPS_LATITUDE"] > 47):
+        return False
+    return True
+
+# direction cannot be lower than 0 and higher than 360 inclusive
+def valid_direction(data):
+    if (data["DIRECTION"] < 0 or data["DIRECTION"] > 360):
+        return False
     return True
 
 # very tuple must have an EVENT_NO_TRIP
@@ -56,6 +83,8 @@ def gps_longitude_has_corresponding_lattitude(data):
 def write_to_db(data):
     return
 
+total_count = 0
+num_acceptable = 0
 if __name__ == '__main__':
 
     # Read arguments and configurations and initialize
@@ -99,7 +128,11 @@ if __name__ == '__main__':
                 record_value = msg.value()
                 data = json.loads(record_value)
                 if(data_is_valid(data)):
-                    write_to_db(data)
+                    total_count = total_count + 1
+                    if (data["VELOCITY"] >= 5 and data["VELOCITY"] <= 15):
+                        num_acceptable = num_acceptable + 1
+                    if (total_count < 1000 or (num_acceptable/total_count) >= 0.4):
+                        write_to_db(data)
 
                 #print(data)
                 file1 = open("/home/shengjia/consumer_log.json", "a")
