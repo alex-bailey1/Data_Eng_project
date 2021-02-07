@@ -81,6 +81,29 @@ def gps_longitude_has_corresponding_lattitude(data):
 
 # Write entry to database
 def write_to_db(data):
+    # Split the data up for uploading into Postgre
+    # Must insert
+    bread_crumb_values = (
+       data["ACT_TIME"],
+       data["GPS_LATTITUDE"],
+       data["GPS_LONGITUDE"],
+       data["DIRECTION"],
+       data["VELOCITY"],
+       data["EVENT_NO_TRIP"] 
+    )
+
+    # SELECT trip_id from Trip WHERE trip_id = (%s), (data["EVENT_NO_TRIP"])
+    # Try inserting. Ignore if it fails
+    trip_values = (
+        data["EVENT_NO_TRIP"],
+        0,
+        data["VEHICLE_ID"],
+        datetime.datetime(data["OPD_DATE"]).weekday(),
+        data["DIRECTION"]
+    )
+
+
+
     return
 
 total_count = 0
