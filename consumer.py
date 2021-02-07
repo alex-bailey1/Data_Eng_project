@@ -3,7 +3,6 @@ import json
 import sys
 sys.path.append("/examples/clients/cloud/python/")
 import ccloud_lib
-# import pandas as pd
 import math
 import datetime
 
@@ -28,9 +27,9 @@ def data_is_valid(data):
 
     return True
 
-# Velocity must be between 0 and 60 inclusive
+# Velocity must be between 0 and 30 inclusive
 def valid_velocity(data):
-    if (data["VELOCITY"] < 0 or data["VELOCITY"] > 60):
+    if (data["VELOCITY"] < 0 or data["VELOCITY"] > 30):
         return False
     return True
 
@@ -59,7 +58,6 @@ def valid_event_no_trip_range(data):
         return False
     return True
 
-
 # Every tuple must have a VEHICLE_ID
 def valid_vehicle_id(data):
     if (data["VEHICLE_ID"] is None or data["VEHICLE_ID"] == "" or data["VEHICLE_ID"] == 0):
@@ -79,13 +77,51 @@ def gps_longitude_has_corresponding_lattitude(data):
         return False
     return True
 
+# Convert json strings to propper types
+def convert_data(entry):
+    # Check that there are no empty values
+    if (entry["EVENT_NO_TRIP"] == ""
+        or entry["OPD_DATE"] == ""
+        or entry["VEHICLE_ID"] == ""
+        or entry["ACT_TIME"] == ""
+        or entry["VELOCITY"] == ""
+        or entry["DIRECTION"] == ""
+        or entry["GPS_LONGITUDE"] == ""
+        or entry["GPS_LATITUDE"] == ""):
+
+        # Return something to indicate failure
+        return False
+    else:
+        # Calculate Service Date (day of the week)
+        day_of_week = datetime.datetime.strptime(entry["OPD_DATE"], "%d-%b-%y").weekday()
+        if (day_of_week < 5):
+            day_of_week = "Weekday"
+        elif (day_of_week == 5):
+            day_of_week = "Saturday"
+        else:
+            day_of_week = "Sunday"
+
+        # Return a converted form of the data for further processing
+        return {
+            "EVENT_NO_TRIP": int(entry["EVENT_NO_TRIP"]),
+            "OPD_DATE": day_of_week,
+            "VEHICLE_ID": int(entry["VEHICLE_ID"]),
+            "ACT_TIME": int(entry["ACT_TIME"]),
+            "ROUTE_ID": 0,
+            "VELOCITY": int(entry["VELOCITY"]),
+            "DIRECTION": int(entry["DIRECTION"]),
+            "GPS_LONGITUDE": float(entry["GPS_LONGITUDE"]),
+            "GPS_LATITUDE": float(entry["GPS_LATITUDE"]),
+        }
+
 # Write entry to database
+# Work in progress
 def write_to_db(data):
     # Split the data up for uploading into Postgre
     # Must insert
     bread_crumb_values = (
        data["ACT_TIME"],
-       data["GPS_LATTITUDE"],
+       data["GPS_LATITUDE"],
        data["GPS_LONGITUDE"],
        data["DIRECTION"],
        data["VELOCITY"],
@@ -98,13 +134,12 @@ def write_to_db(data):
         data["EVENT_NO_TRIP"],
         0,
         data["VEHICLE_ID"],
-        datetime.datetime(data["OPD_DATE"]).weekday(),
+        data["OPD_DATE"],
         data["DIRECTION"]
     )
 
-
-
     return
+
 
 total_count = 0
 num_acceptable = 0
@@ -149,7 +184,7 @@ if __name__ == '__main__':
                 # Check for Kafka message
                 record_key = msg.key()
                 record_value = msg.value()
-                data = json.loads(record_value)
+                data = convert_data(json.loads(record_value))
                 if(data_is_valid(data)):
                     total_count = total_count + 1
                     if (data["VELOCITY"] >= 5 and data["VELOCITY"] <= 15):
