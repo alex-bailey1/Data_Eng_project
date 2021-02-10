@@ -5,6 +5,15 @@ sys.path.append("/examples/clients/cloud/python/")
 import ccloud_lib
 import math
 import datetime
+import psycopg2
+import os
+
+# Database Connection Info
+DBname = os.environ['DB_NAME']
+DBuser = os.environ['DB_USER']
+DBpwd = os.environ['DB_PWD']
+TableBC = os.environ['DB_TABLE_BC']
+TableTR = os.environ['DB_TABLE_TR']
 
 def data_is_valid(data):
     # Check to see if the record passes all the checks. Return false if it doesn't
@@ -93,7 +102,8 @@ def convert_data(entry):
         return False
     else:
         # Calculate Service Date (day of the week)
-        day_of_week = datetime.datetime.strptime(entry["OPD_DATE"], "%d-%b-%y").weekday()
+        date = datetime.datetime.strptime(entry["OPD_DATE"], "%d-%b-%y")
+        day_of_week = date.weekday()
         if (day_of_week < 5):
             day_of_week = "Weekday"
         elif (day_of_week == 5):
@@ -106,7 +116,7 @@ def convert_data(entry):
             "EVENT_NO_TRIP": int(entry["EVENT_NO_TRIP"]),
             "OPD_DATE": day_of_week,
             "VEHICLE_ID": int(entry["VEHICLE_ID"]),
-            "ACT_TIME": int(entry["ACT_TIME"]),
+            "ACT_TIME": date + datetime.timedelta(seconds=int(entry["ACT_TIME"])),
             "ROUTE_ID": 0,
             "VELOCITY": int(entry["VELOCITY"]),
             "DIRECTION": int(entry["DIRECTION"]),
@@ -116,27 +126,47 @@ def convert_data(entry):
 
 # Write entry to database
 # Work in progress
-def write_to_db(data):
-    # Split the data up for uploading into Postgre
-    # Must insert
-    bread_crumb_values = (
-       data["ACT_TIME"],
-       data["GPS_LATITUDE"],
-       data["GPS_LONGITUDE"],
-       data["DIRECTION"],
-       data["VELOCITY"],
-       data["EVENT_NO_TRIP"] 
-    )
-
+def write_to_db(data, conn):
+    # Split the data up for uploading into Postgre    
     # SELECT trip_id from Trip WHERE trip_id = (%s), (data["EVENT_NO_TRIP"])
     # Try inserting. Ignore if it fails
-    trip_values = (
-        data["EVENT_NO_TRIP"],
-        0,
-        data["VEHICLE_ID"],
-        data["OPD_DATE"],
-        data["DIRECTION"]
-    )
+    trip_values = {
+        'trip_id': data["EVENT_NO_TRIP"],
+        'route_id': 0,
+        'vehicle_id': data["VEHICLE_ID"],
+        'service_key': data["OPD_DATE"],
+        'direction': data["DIRECTION"]
+    }
+
+    bread_crumb_values = {
+       'tstamp': data["ACT_TIME"],
+       'latitude': data["GPS_LATITUDE"],
+       'longitude': data["GPS_LONGITUDE"],
+       'direction': data["DIRECTION"],
+       'speed': data["VELOCITY"],
+       'trip_id': data["EVENT_NO_TRIP"] 
+    }
+
+    with conn.cursor() as cursor:
+        cursor.execute(
+            f"""
+            INSERT INTO {TableTR} VALUES(
+                {trip_values["trip_id"]},
+                {trip_values["route_id"]},
+                {trip_values["vehicle_id"]},
+                '{trip_values["service_key"]}',
+                {trip_values["direction"]}
+            );""")
+        cursor.execute(
+            f"""
+            INSERT INTO {TableBC} VALUES(
+                {bread_crumb_values["tstamp"]},
+                {bread_crumb_values["latitude"]},
+                {bread_crumb_values["longitude"]},
+                {bread_crumb_values["direction"]},
+                {bread_crumb_values["speed"]},
+                {bread_crumb_values["trip_id"]}
+            );""")
 
     return
 
@@ -166,6 +196,15 @@ if __name__ == '__main__':
     # Subscribe to topic
     consumer.subscribe([topic])
 
+    # Connect to db
+    connection = psycopg2.connect(
+        host="35.233.168.90",
+        database=DBname,
+        user=DBuser,
+        password=DBpwd,
+	)
+    connection.autocommit = True
+
     # Process messages
     # total_count = 0
     try:
@@ -190,7 +229,7 @@ if __name__ == '__main__':
                     if (data["VELOCITY"] >= 5 and data["VELOCITY"] <= 15):
                         num_acceptable = num_acceptable + 1
                     if (total_count < 1000 or (num_acceptable/total_count) >= 0.4):
-                        write_to_db(data)
+                        write_to_db(data, connection)
 
                 #print(data)
                 file1 = open("/home/shengjia/consumer_log.json", "a")
@@ -204,3 +243,4 @@ if __name__ == '__main__':
     finally:
         # Leave group and commit final offsets
         consumer.close()
+        connection.close()
