@@ -12,8 +12,6 @@ import os
 DBname = os.getenv('DB_NAME')
 DBuser = os.getenv('DB_USER')
 DBpwd = os.getenv('DB_PWD')
-TableBC = os.getenv('DB_TABLE_BC')
-TableTR = os.getenv('DB_TABLE_TR')
 
 def data_is_valid(data):
     # Check to see if the record passes all the checks. Return false if it doesn't
@@ -170,7 +168,7 @@ def write_to_db(data, conn):
                 bread_crumb_values["speed"],
                 bread_crumb_values["trip_id"]
             )
-            )
+        )
 
     return
 
@@ -227,7 +225,7 @@ if __name__ == '__main__':
                 record_key = msg.key()
                 record_value = msg.value()
                 data = convert_data(json.loads(record_value))
-                if(data != False or data_is_valid(data)):
+                if (data != False and data_is_valid(data)):
                     total_count = total_count + 1
                     if (data["VELOCITY"] >= 5 and data["VELOCITY"] <= 15):
                         num_acceptable = num_acceptable + 1
@@ -237,7 +235,7 @@ if __name__ == '__main__':
                 #print(data)
                 file1 = open("/home/shengjia/consumer_log.json", "a")
 
-                json.dump(data, file1)
+                json.dump(data, file1, default=str)
                 file1.close()
 
 
