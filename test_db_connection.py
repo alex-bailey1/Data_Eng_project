@@ -9,21 +9,23 @@ import psycopg2
 import os
 
 # Database Connection Info
-DBname = os.environ['DB_NAME']
-DBuser = os.environ['DB_USER']
-DBpwd = os.environ['DB_PWD']
-TableBC = os.environ['DB_TABLE_BC']
-TableTR = os.environ['DB_TABLE_TR']
+DBname = os.getenv('DB_NAME')
+DBuser = os.getenv('DB_USER')
+DBpwd = os.getenv('DB_PWD')
+TableBC = os.getenv('DB_TABLE_BC')
+TableTR = os.getenv('DB_TABLE_TR')
 
-all_data = json.loads("name")
+with open("sample_data.json") as file:
+    all_data = json.load(file)
 data = all_data[0]
 
 
 def data_is_valid(data):
+    print(data)
     # Check to see if the record passes all the checks. Return false if it doesn't
-    if (not valid_event_no_trip):
+    if (not valid_event_no_trip(data)):
         return False
-    elif (not valid_event_no_trip_range):
+    elif (not valid_event_no_trip_range(data)):
         return False
     elif (not valid_act_time_range(data)):
         return False
@@ -79,7 +81,7 @@ def valid_vehicle_id(data):
 
 # ACT_TIME should be in the range 0-93600 (0-26 hours)
 def valid_act_time_range(data):
-    if(data["ACT_TIME"] < 0 or data["ACT_TIME"] > 93600):
+    if(data["ACT_TIME_SECONDS"] < 0 or data["ACT_TIME_SECONDS"] > 93600):
         return False
     return True
 
@@ -124,8 +126,10 @@ def convert_data(entry):
             "ROUTE_ID": 0,
             "VELOCITY": int(entry["VELOCITY"]),
             "DIRECTION": int(entry["DIRECTION"]),
+            "ROUTE_STATUS": "Out",
             "GPS_LONGITUDE": float(entry["GPS_LONGITUDE"]),
             "GPS_LATITUDE": float(entry["GPS_LATITUDE"]),
+            "ACT_TIME_SECONDS": int(entry["ACT_TIME"])
         }
 
 # Write entry to database
@@ -139,7 +143,7 @@ def write_to_db(data, conn):
         'route_id': 0,
         'vehicle_id': data["VEHICLE_ID"],
         'service_key': data["OPD_DATE"],
-        'direction': data["DIRECTION"]
+        'direction': data["ROUTE_STATUS"]
     }
 
     bread_crumb_values = {
@@ -149,28 +153,27 @@ def write_to_db(data, conn):
        'direction': data["DIRECTION"],
        'speed': data["VELOCITY"],
        'trip_id': data["EVENT_NO_TRIP"] 
-    }
+       }
 
     with conn.cursor() as cursor:
-        cursor.execute(
-            f"""
-            INSERT INTO {TableTR} VALUES(
-                {trip_values["trip_id"]},
-                {trip_values["route_id"]},
-                {trip_values["vehicle_id"]},
-                '{trip_values["service_key"]}',
-                {trip_values["direction"]}
-            );""")
-        cursor.execute(
-            f"""
-            INSERT INTO {TableBC} VALUES(
-                {bread_crumb_values["tstamp"]},
-                {bread_crumb_values["latitude"]},
-                {bread_crumb_values["longitude"]},
-                {bread_crumb_values["direction"]},
-                {bread_crumb_values["speed"]},
-                {bread_crumb_values["trip_id"]}
-            );""")
+        #cursor.execute(
+        #    f"""
+        #    INSERT INTO {TableTR} VALUES(
+        #        {trip_values["trip_id"]},
+        #        {trip_values["route_id"]},
+        #        {trip_values["vehicle_id"]},
+        #        '{trip_values["service_key"]}',
+        #        '{trip_values["direction"]}'
+        #    );""")
+        cursor.execute("INSERT INTO BreadCrumb VALUES(%s, %s, %s, %s, %s, %s) ;", (
+                bread_crumb_values["tstamp"],
+                bread_crumb_values["latitude"],
+                bread_crumb_values["longitude"],
+                bread_crumb_values["direction"],
+                bread_crumb_values["speed"],
+                bread_crumb_values["trip_id"]
+            )
+            )
 
     return
 
@@ -208,8 +211,9 @@ if __name__ == '__main__':
         password=DBpwd,
 	)
     connection.autocommit = True
-
-    if(data_is_valid(data)):
+    #print("data before convert", data) 
+    data = convert_data(data)
+    if(data != False or data_is_valid(data)):
         total_count = total_count + 1
         if (data["VELOCITY"] >= 5 and data["VELOCITY"] <= 15):
             num_acceptable = num_acceptable + 1
