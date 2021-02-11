@@ -1,0 +1,1 @@
+psql -U database1 -d postgres  -h 35.233.168.90
