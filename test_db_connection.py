@@ -156,15 +156,15 @@ def write_to_db(data, conn):
        }
 
     with conn.cursor() as cursor:
-        #cursor.execute(
-        #    f"""
-        #    INSERT INTO {TableTR} VALUES(
-        #        {trip_values["trip_id"]},
-        #        {trip_values["route_id"]},
-        #        {trip_values["vehicle_id"]},
-        #        '{trip_values["service_key"]}',
-        #        '{trip_values["direction"]}'
-        #    );""")
+        with conn.cursor() as cursor:
+        cursor.execute("INSERT INTO Trip VALUES(%s, %s, %s, %s, %s);", (
+                trip_values["trip_id"],
+                trip_values["route_id"],
+                trip_values["vehicle_id"],
+                trip_values["service_key"],
+                trip_values["direction"]
+            )
+        )
         cursor.execute("INSERT INTO BreadCrumb VALUES(%s, %s, %s, %s, %s, %s) ;", (
                 bread_crumb_values["tstamp"],
                 bread_crumb_values["latitude"],
@@ -182,26 +182,26 @@ total_count = 0
 num_acceptable = 0
 if __name__ == '__main__':
 
-    # # Read arguments and configurations and initialize
-    # config_file = "/.confluence/librdkafka.config"
-    # topic = "project_topic"
-    # conf = ccloud_lib.read_ccloud_config(config_file)
+    # Read arguments and configurations and initialize
+    config_file = "/.confluence/librdkafka.config"
+    topic = "project_topic"
+    conf = ccloud_lib.read_ccloud_config(config_file)
 
-    # # Create Consumer instance
-    # # 'auto.offset.reset=earliest' to start reading from the beginning of the
-    # #   topic if no committed offsets exist
-    # consumer = Consumer({
-    #     'bootstrap.servers': conf['bootstrap.servers'],
-    #     'sasl.mechanisms': conf['sasl.mechanisms'],
-    #     'security.protocol': conf['security.protocol'],
-    #     'sasl.username': conf['sasl.username'],
-    #     'sasl.password': conf['sasl.password'],
-    #     'group.id': 'project_group',
-    #     'auto.offset.reset': 'earliest',
-    # })
+    # Create Consumer instance
+    # 'auto.offset.reset=earliest' to start reading from the beginning of the
+    #   topic if no committed offsets exist
+    consumer = Consumer({
+        'bootstrap.servers': conf['bootstrap.servers'],
+        'sasl.mechanisms': conf['sasl.mechanisms'],
+        'security.protocol': conf['security.protocol'],
+        'sasl.username': conf['sasl.username'],
+        'sasl.password': conf['sasl.password'],
+        'group.id': 'project_group',
+        'auto.offset.reset': 'earliest',
+    })
 
     # Subscribe to topic
-    # consumer.subscribe([topic])
+    consumer.subscribe([topic])
 
     # Connect to db
     connection = psycopg2.connect(
@@ -211,8 +211,7 @@ if __name__ == '__main__':
         password=DBpwd,
 	)
     connection.autocommit = True
-    #print("data before convert", data) 
-    data = convert_data(data)
+
     if(data != False or data_is_valid(data)):
         total_count = total_count + 1
         if (data["VELOCITY"] >= 5 and data["VELOCITY"] <= 15):
@@ -222,42 +221,42 @@ if __name__ == '__main__':
 
 
 
-    # Process messages
-    # total_count = 0
-    # try:
-    #     while True:
-    #         msg = consumer.poll(1.0)
-    #         if msg is None:
-    #             # No message available within timeout.
-    #             # Initial message consumption may take up to
-    #             # `session.timeout.ms` for the consumer group to
-    #             # rebalance and start consuming
-    #             print("Waiting for message or event/error in poll()")
-    #             continue
-    #         elif msg.error():
-    #             print('error: {}'.format(msg.error()))
-    #         else:
-    #             # Check for Kafka message
-    #             record_key = msg.key()
-    #             record_value = msg.value()
-    #             data = convert_data(json.loads(record_value))
-    #             if(data_is_valid(data)):
-    #                 total_count = total_count + 1
-    #                 if (data["VELOCITY"] >= 5 and data["VELOCITY"] <= 15):
-    #                     num_acceptable = num_acceptable + 1
-    #                 if (total_count < 1000 or (num_acceptable/total_count) >= 0.4):
-    #                     write_to_db(data, connection)
+    Process messages
+    total_count = 0
+    try:
+        while True:
+            msg = consumer.poll(1.0)
+            if msg is None:
+                # No message available within timeout.
+                # Initial message consumption may take up to
+                # `session.timeout.ms` for the consumer group to
+                # rebalance and start consuming
+                print("Waiting for message or event/error in poll()")
+                continue
+            elif msg.error():
+                print('error: {}'.format(msg.error()))
+            else:
+                # Check for Kafka message
+                record_key = msg.key()
+                record_value = msg.value()
+                data = convert_data(json.loads(record_value))
+                if(data != False or data_is_valid(data)):
+                    total_count = total_count + 1
+                    if (data["VELOCITY"] >= 5 and data["VELOCITY"] <= 15):
+                        num_acceptable = num_acceptable + 1
+                    if (total_count < 1000 or (num_acceptable/total_count) >= 0.4):
+                        write_to_db(data, connection)
 
-    #             #print(data)
-    #             file1 = open("/home/shengjia/consumer_log.json", "a")
+                #print(data)
+                file1 = open("/home/shengjia/consumer_log.json", "a")
 
-    #             json.dump(data, file1)
-    #             file1.close()
+                json.dump(data, file1)
+                file1.close()
 
 
-    # except KeyboardInterrupt:
-    #     pass
-    # finally:
-    #     # Leave group and commit final offsets
-    #     consumer.close()
-    #     connection.close()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # Leave group and commit final offsets
+        consumer.close()
+        connection.close()

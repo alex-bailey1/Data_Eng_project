@@ -9,17 +9,17 @@ import psycopg2
 import os
 
 # Database Connection Info
-DBname = os.environ['DB_NAME']
-DBuser = os.environ['DB_USER']
-DBpwd = os.environ['DB_PWD']
-TableBC = os.environ['DB_TABLE_BC']
-TableTR = os.environ['DB_TABLE_TR']
+DBname = os.getenv('DB_NAME')
+DBuser = os.getenv('DB_USER')
+DBpwd = os.getenv('DB_PWD')
+TableBC = os.getenv('DB_TABLE_BC')
+TableTR = os.getenv('DB_TABLE_TR')
 
 def data_is_valid(data):
     # Check to see if the record passes all the checks. Return false if it doesn't
-    if (not valid_event_no_trip):
+    if (not valid_event_no_trip(data)):
         return False
-    elif (not valid_event_no_trip_range):
+    elif (not valid_event_no_trip_range(data)):
         return False
     elif (not valid_act_time_range(data)):
         return False
@@ -75,7 +75,7 @@ def valid_vehicle_id(data):
 
 # ACT_TIME should be in the range 0-93600 (0-26 hours)
 def valid_act_time_range(data):
-    if(data["ACT_TIME"] < 0 or data["ACT_TIME"] > 93600):
+    if(data["ACT_TIME_SECONDS"] < 0 or data["ACT_TIME_SECONDS"] > 93600):
         return False
     return True
 
@@ -120,8 +120,10 @@ def convert_data(entry):
             "ROUTE_ID": 0,
             "VELOCITY": int(entry["VELOCITY"]),
             "DIRECTION": int(entry["DIRECTION"]),
+            "ROUTE_STATUS": "Out",
             "GPS_LONGITUDE": float(entry["GPS_LONGITUDE"]),
             "GPS_LATITUDE": float(entry["GPS_LATITUDE"]),
+            "ACT_TIME_SECONDS": int(entry["ACT_TIME"])
         }
 
 # Write entry to database
@@ -135,7 +137,7 @@ def write_to_db(data, conn):
         'route_id': 0,
         'vehicle_id': data["VEHICLE_ID"],
         'service_key': data["OPD_DATE"],
-        'direction': data["DIRECTION"]
+        'direction': data["ROUTE_STATUS"]
     }
 
     bread_crumb_values = {
@@ -148,25 +150,27 @@ def write_to_db(data, conn):
     }
 
     with conn.cursor() as cursor:
-        cursor.execute(
-            f"""
-            INSERT INTO {TableTR} VALUES(
-                {trip_values["trip_id"]},
-                {trip_values["route_id"]},
-                {trip_values["vehicle_id"]},
-                '{trip_values["service_key"]}',
-                {trip_values["direction"]}
-            );""")
-        cursor.execute(
-            f"""
-            INSERT INTO {TableBC} VALUES(
-                {bread_crumb_values["tstamp"]},
-                {bread_crumb_values["latitude"]},
-                {bread_crumb_values["longitude"]},
-                {bread_crumb_values["direction"]},
-                {bread_crumb_values["speed"]},
-                {bread_crumb_values["trip_id"]}
-            );""")
+        try:
+            cursor.execute("INSERT INTO Trip VALUES(%s, %s, %s, %s, %s);", (
+                    trip_values["trip_id"],
+                    trip_values["route_id"],
+                    trip_values["vehicle_id"],
+                    trip_values["service_key"],
+                    trip_values["direction"]
+                )
+            )
+        except psycopg2.errors.UniqueViolation:
+            pass
+        
+        cursor.execute("INSERT INTO BreadCrumb VALUES(%s, %s, %s, %s, %s, %s) ;", (
+                bread_crumb_values["tstamp"],
+                bread_crumb_values["latitude"],
+                bread_crumb_values["longitude"],
+                bread_crumb_values["direction"],
+                bread_crumb_values["speed"],
+                bread_crumb_values["trip_id"]
+            )
+            )
 
     return
 
@@ -206,7 +210,6 @@ if __name__ == '__main__':
     connection.autocommit = True
 
     # Process messages
-    # total_count = 0
     try:
         while True:
             msg = consumer.poll(1.0)
@@ -224,7 +227,7 @@ if __name__ == '__main__':
                 record_key = msg.key()
                 record_value = msg.value()
                 data = convert_data(json.loads(record_value))
-                if(data_is_valid(data)):
+                if(data != False or data_is_valid(data)):
                     total_count = total_count + 1
                     if (data["VELOCITY"] >= 5 and data["VELOCITY"] <= 15):
                         num_acceptable = num_acceptable + 1
