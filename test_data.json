@@ -1,0 +1,34 @@
+[
+    {
+    "EVENT_NO_TRIP": "169195350",
+    "EVENT_NO_STOP": "169484353",
+    "OPD_DATE": "04-JAN-20",
+    "VEHICLE_ID": "2271",
+    "METERS": "422",
+    "ACT_TIME": "31565",
+    "VELOCITY": "",
+    "DIRECTION": "",
+    "RADIO_QUALITY": "",
+    "GPS_LONGITUDE": "-122.604938",
+    "GPS_LATITUDE": "45.636718",
+    "GPS_SATELLITES": "12",
+    "GPS_HDOP": "0.7",
+    "SCHEDULE_DEVIATION": ""
+  },
+  {
+    "EVENT_NO_TRIP": "169195350",
+    "EVENT_NO_STOP": "169484353",
+    "OPD_DATE": "04-JAN-20",
+    "VEHICLE_ID": "2271",
+    "METERS": "438",
+    "ACT_TIME": "31570",
+    "VELOCITY": "3",
+    "DIRECTION": "180",
+    "RADIO_QUALITY": "",
+    "GPS_LONGITUDE": "-122.604938",
+    "GPS_LATITUDE": "45.636577",
+    "GPS_SATELLITES": "12",
+    "GPS_HDOP": "0.7",
+    "SCHEDULE_DEVIATION": ""
+  }
+]
