@@ -13,168 +13,47 @@ DBname = os.getenv('DB_NAME')
 DBuser = os.getenv('DB_USER')
 DBpwd = os.getenv('DB_PWD')
 
-"""def data_is_valid(data):
+def data_is_valid(data):
     # Check to see if the record passes all the checks. Return false if it doesn't
-    if (not valid_event_no_trip(data)):
+    if (not valid_trip_event(data)):
         return False
-    elif (not valid_event_no_trip_range(data)):
+    if (not valid_direction(data)):
         return False
-    elif (not valid_act_time_range(data)):
-        return False
-    elif (not valid_latitude(data)):
-        return False
-    elif (not valid_direction(data)):
-        return False
-    elif (not valid_vehicle_id(data)):
-        return False
-    elif (not gps_longitude_has_corresponding_lattitude(data)):
-        return False
-    elif (not valid_velocity(data)):
+    if (not valid_route_number(data)):
         return False
 
-    return True"""
+    return True
 
-# Velocity must be between 0 and 30 inclusive
-"""def valid_velocity(data):
-    if (data["VELOCITY"] < 0 or data["VELOCITY"] > 30):
+# Starting with these at least
+def valid_trip_event(data):
+    if(data["TRIP_ID"] < 140000000):
         return False
     return True
 
-# Latitude must be between 45 and 47 inclusive
-def valid_latitude(data):
-    if (data["GPS_LATITUDE"] < 45 or data["GPS_LATITUDE"] > 47):
-        return False
-    return True
-
-# direction cannot be lower than 0 and higher than 360 inclusive
 def valid_direction(data):
-    if (data["DIRECTION"] < 0 or data["DIRECTION"] > 360):
+    if(int(data["DIRECTION"]) < 0 or int(data["DIRECTION"]) > 1):
         return False
     return True
 
-# very tuple must have an EVENT_NO_TRIP
-# need to test
-def valid_event_no_trip(data):
-    if (data["EVENT_NO_TRIP"] is None or data["EVENT_NO_TRIP"] == "" or data["EVENT_NO_TRIP"] == 0):
+def valid_route_number(data):
+    if(int(data["ROUTE_NUMBER"]) < 0 or int(data["ROUTE_NUMBER"]) > 2000):
         return False
     return True
 
-# Every EVENT_NO_TRIP should be above 140000000
-def valid_event_no_trip_range(data):
-    if(data["EVENT_NO_TRIP"] < 140000000):
-        return False
-    return True
-
-# Every tuple must have a VEHICLE_ID
-def valid_vehicle_id(data):
-    if (data["VEHICLE_ID"] is None or data["VEHICLE_ID"] == "" or data["VEHICLE_ID"] == 0):
-        return False
-    return True
-
-# ACT_TIME should be in the range 0-93600 (0-26 hours)
-def valid_act_time_range(data):
-    if(data["ACT_TIME_SECONDS"] < 0 or data["ACT_TIME_SECONDS"] > 93600):
-        return False
-    return True
-
-# Every GPS_LATITUDE must have a corresponding GPS_LONGITUDE
-def gps_longitude_has_corresponding_lattitude(data):
-    if ((data["GPS_LATITUDE"] is not None and data["GPS_LATITUDE"] != 0) and
-        (data["GPS_LONGITUDE"] is None or data["GPS_LONGITUDE"] == 0)):
-        return False
-    return True
-
-# Convert json strings to propper types
-def convert_data(entry):
-    # Check that there are no empty values
-    if (entry["EVENT_NO_TRIP"] == ""
-        or entry["OPD_DATE"] == ""
-        or entry["VEHICLE_ID"] == ""
-        or entry["ACT_TIME"] == ""
-        or entry["VELOCITY"] == ""
-        or entry["DIRECTION"] == ""
-        or entry["GPS_LONGITUDE"] == ""
-        or entry["GPS_LATITUDE"] == ""):
-
-        # Return something to indicate failure
-        return False
-    else:
-        # Calculate Service Date (day of the week)
-        date = datetime.datetime.strptime(entry["OPD_DATE"], "%d-%b-%y")
-        day_of_week = date.weekday()
-        if (day_of_week < 5):
-            day_of_week = "Weekday"
-        elif (day_of_week == 5):
-            day_of_week = "Saturday"
-        else:
-            day_of_week = "Sunday"
-
-        # Return a converted form of the data for further processing
-        return {
-            "EVENT_NO_TRIP": int(entry["EVENT_NO_TRIP"]),
-            "OPD_DATE": day_of_week,
-            "VEHICLE_ID": int(entry["VEHICLE_ID"]),
-            "ACT_TIME": date + datetime.timedelta(seconds=int(entry["ACT_TIME"])),
-            "ROUTE_ID": 0,
-            "VELOCITY": int(entry["VELOCITY"]),
-            "DIRECTION": int(entry["DIRECTION"]),
-            "ROUTE_STATUS": "Out",
-            "GPS_LONGITUDE": float(entry["GPS_LONGITUDE"]),
-            "GPS_LATITUDE": float(entry["GPS_LATITUDE"]),
-            "ACT_TIME_SECONDS": int(entry["ACT_TIME"])
-        }
-
-# Write entry to database
-# Work in progress
+# Update appropriate entries in database
 def write_to_db(data, conn):
-    # Split the data up for uploading into Postgre    
-    # SELECT trip_id from Trip WHERE trip_id = (%s), (data["EVENT_NO_TRIP"])
-    # Try inserting. Ignore if it fails
-    trip_values = {
-        'trip_id': data["EVENT_NO_TRIP"],
-        'route_id': 0,
-        'vehicle_id': data["VEHICLE_ID"],
-        'service_key': data["OPD_DATE"],
-        'direction': data["ROUTE_STATUS"]
-    }
-
-    bread_crumb_values = {
-       'tstamp': data["ACT_TIME"],
-       'latitude': data["GPS_LATITUDE"],
-       'longitude': data["GPS_LONGITUDE"],
-       'direction': data["DIRECTION"],
-       'speed': data["VELOCITY"],
-       'trip_id': data["EVENT_NO_TRIP"] 
-    }
-
     with conn.cursor() as cursor:
-        try:
-            cursor.execute("INSERT INTO Trip VALUES(%s, %s, %s, %s, %s);", (
-                    trip_values["trip_id"],
-                    trip_values["route_id"],
-                    trip_values["vehicle_id"],
-                    trip_values["service_key"],
-                    trip_values["direction"]
-                )
-            )
-        except psycopg2.errors.UniqueViolation:
-            pass
-        
-        cursor.execute("INSERT INTO BreadCrumb VALUES(%s, %s, %s, %s, %s, %s) ;", (
-                bread_crumb_values["tstamp"],
-                bread_crumb_values["latitude"],
-                bread_crumb_values["longitude"],
-                bread_crumb_values["direction"],
-                bread_crumb_values["speed"],
-                bread_crumb_values["trip_id"]
-            )
-        )
+        cursor.execute("""
+        UPDATE Trip 
+        SET
+           route_id = %d,
+           direction = %d
+        WHERE
+           trip_id = %d
+        ;""", (data["ROUTE_NUMBER"], data["DIRECTION"], data["TRIP_ID"]))
 
     return
-"""
 
-total_count = 0
-num_acceptable = 0
 if __name__ == '__main__':
 
     # Read arguments and configurations and initialize
@@ -224,8 +103,10 @@ if __name__ == '__main__':
                 # Check for Kafka message
                 record_key = msg.key()
                 record_value = msg.value()
+                data = json.loads(record_value)
                 print(record_key)
-                print(record_value)
+                print(data)
+                print(data_is_valid(data))
                 print("-----------------")
                 """data = convert_data(json.loads(record_value))
                 if (data != False and data_is_valid(data)):
