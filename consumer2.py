@@ -31,8 +31,9 @@ def valid_trip_event(data):
     return True
 
 def valid_direction(data):
-    if(data["DIRECTION"] == ""
-       or data["DIRECTION"] == None 
+    if(data["DIRECTION"] == None
+       or data["DIRECTION"] == ""
+       or data["DIRECTION"] == " " 
        or int(data["DIRECTION"]) < 0
        or int(data["DIRECTION"]) > 1):
         return False
@@ -114,8 +115,8 @@ if __name__ == '__main__':
                 record_key = msg.key()
                 record_value = msg.value()
                 data = json.loads(record_value)
+                print(data["DIRECTION"])
                 if (data_is_valid(data)):
-                    print(data["DI"])
                     convert_data(data)
                     write_to_db(data, connection)
 
