@@ -112,6 +112,7 @@ if __name__ == '__main__':
                 record_value = msg.value()
                 data = json.loads(record_value)
                 if (data_is_valid(data)):
+                    print(data["Direction"])
                     convert_data(data)
                     write_to_db(data, connection)
 
