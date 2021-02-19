@@ -46,10 +46,10 @@ def write_to_db(data, conn):
         cursor.execute("""
         UPDATE Trip 
         SET
-           route_id = %d,
-           direction = %d
+           route_id = %s,
+           direction = %s
         WHERE
-           trip_id = %d
+           trip_id = %s
         ;""", (data["ROUTE_NUMBER"], data["DIRECTION"], data["TRIP_ID"]))
 
     return
@@ -78,13 +78,13 @@ if __name__ == '__main__':
     consumer.subscribe([topic])
 
     # Connect to db
-    """connection = psycopg2.connect(
+    connection = psycopg2.connect(
         host="35.233.168.90",
         database=DBname,
         user=DBuser,
         password=DBpwd,
-	)"""
-    #connection.autocommit = True
+	)
+    connection.autocommit = True
 
     # Process messages
     try:
@@ -104,28 +104,12 @@ if __name__ == '__main__':
                 record_key = msg.key()
                 record_value = msg.value()
                 data = json.loads(record_value)
-                print(record_key)
-                print(data)
-                print(data_is_valid(data))
-                print("-----------------")
-                """data = convert_data(json.loads(record_value))
-                if (data != False and data_is_valid(data)):
-                    total_count = total_count + 1
-                    if (data["VELOCITY"] >= 5 and data["VELOCITY"] <= 15):
-                        num_acceptable = num_acceptable + 1
-                    if (total_count < 1000 or (num_acceptable/total_count) >= 0.4):
-                        write_to_db(data, connection)
-
-                #print(data)
-                file1 = open("/home/shengjia/consumer_log.json", "a")
-
-                json.dump(data, file1, default=str)
-                file1.close()"""
-
+                if (data_is_valid(data)):
+                    write_to_db(data, connection)
 
     except KeyboardInterrupt:
         pass
     finally:
         # Leave group and commit final offsets
         consumer.close()
-        #connection.close()
+        connection.close()
