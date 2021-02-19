@@ -54,7 +54,7 @@ def write_to_db(data, conn):
         UPDATE Trip 
         SET
            route_id = %s,
-           direction = '%s'
+           direction = %s
         WHERE
            trip_id = %s
         ;""", (data["ROUTE_NUMBER"], data["DIRECTION"], data["TRIP_ID"]))
