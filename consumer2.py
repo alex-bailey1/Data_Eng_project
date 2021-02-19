@@ -54,7 +54,7 @@ def write_to_db(data, conn):
         UPDATE Trip 
         SET
            route_id = %s,
-           direction = %s
+           direction = '%s'
         WHERE
            trip_id = %s
         ;""", (data["ROUTE_NUMBER"], data["DIRECTION"], data["TRIP_ID"]))
@@ -111,10 +111,9 @@ if __name__ == '__main__':
                 record_key = msg.key()
                 record_value = msg.value()
                 data = json.loads(record_value)
-                convert_data(data)
-                print(data)
-                #if (data_is_valid(data)):
-                #    write_to_db(data, connection)
+                if (data_is_valid(data)):
+                    convert_data(data)
+                    write_to_db(data, connection)
 
     except KeyboardInterrupt:
         pass
