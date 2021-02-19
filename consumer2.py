@@ -40,6 +40,13 @@ def valid_route_number(data):
         return False
     return True
 
+def convert_data(entry):
+    direction = entry["DIRECTION"]
+    if (direction == '0'):
+        entry["DIRECTION"] = "Out"
+    else:
+        entry["DIRECTION"] = "Back"
+
 # Update appropriate entries in database
 def write_to_db(data, conn):
     with conn.cursor() as cursor:
@@ -104,8 +111,10 @@ if __name__ == '__main__':
                 record_key = msg.key()
                 record_value = msg.value()
                 data = json.loads(record_value)
-                if (data_is_valid(data)):
-                    write_to_db(data, connection)
+                convert_data(data)
+                print(data)
+                #if (data_is_valid(data)):
+                #    write_to_db(data, connection)
 
     except KeyboardInterrupt:
         pass
