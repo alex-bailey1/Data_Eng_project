@@ -11,13 +11,10 @@ import sys
 sys.path.append("/home/bail34/examples/clients/cloud/python/")
 import ccloud_lib
 
-
-
-
 # Get data abd save it
 request = request.urlopen('http://rbi.ddns.net/getBreadCrumbData')
 the_parse = json.load(request)
-date = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+date = datetime.today().strftime("%Y-%m-%d")
 with open(date + '.json', 'w') as output_file:
     json.dump(the_parse, output_file)
 

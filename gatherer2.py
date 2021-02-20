@@ -20,7 +20,7 @@ h3s = soup.find_all('h3')
 tables = soup.find_all('table')
 the_parse = []
 for i in range(0, len(h3s)):
-    trip_id = int((str(h3s[i]).split(' '))[4]) # # https://stackoverflow.com/questions/4289331/how-to-extract-numbers-from-a-string-in-python
+    trip_id = int((str(h3s[i]).split(' '))[4]) # https://stackoverflow.com/questions/4289331/how-to-extract-numbers-from-a-string-in-python
     items = tables[i].find_all('tr')[1].find_all('td')
     data = {
         "TRIP_ID": trip_id,
@@ -50,7 +50,7 @@ for i in range(0, len(h3s)):
     }
     the_parse.append(data)
 
-date = (datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+date = datetime.today().strftime("%Y-%m-%d")
 with open("stop-events-" + date + '.json', 'w') as output_file:
     json.dump(the_parse, output_file)
 
