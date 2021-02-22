@@ -19,16 +19,17 @@ def write_from_db():
         cursor.execute("""SELECT latitude, longitude, speed FROM BreadCrumb LIMIT 10;""")
         # print("data:")
         # print(cursor.fetchall())
-        return data
+        return cursor.fetchall()
 
 
 
 def convert_to_geojson(data):
+    features = []
     for line in data:        
         # Uncomment these lines
-        lat = row[0]
-        long_val = row[1]
-        speed = row[2]
+        lat = line[0]
+        long_val = line[1]
+        speed = line[2]
 
         # skip the rows where speed is missing
         if speed is None or speed == "":
@@ -36,8 +37,8 @@ def convert_to_geojson(data):
      	
         try:
             latitude, longitude = map(float, (lat, long_val))
-            print(latitude)
-            print(longitude)
+            #print(latitude)
+            #print(longitude)
             features.append(
                 Feature(
                     geometry = Point((longitude,latitude)),
@@ -48,6 +49,7 @@ def convert_to_geojson(data):
             )
         except ValueError:
             continue
+    #print(features)
 
 # features = []
 # with open('sample_data.tsv', newline='') as csvfile:
