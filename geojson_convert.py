@@ -17,14 +17,14 @@ def write_from_db():
     connection.autocommit = True
     with connection.cursor() as cursor:
         cursor.execute("""SELECT latitude, longitude, speed FROM BreadCrumb LIMIT 10;""")
-        print("data:")
-        print(cursor.fetchall())
-        # return data
+        # print("data:")
+        # print(cursor.fetchall())
+        return data
 
 
 
 def convert_to_geojson(data):
-    for line in data[1:]:        
+    for line in data:        
         # Uncomment these lines
         # lat = row[Index of latitude column]
         # long = row[Index of longitude column]
@@ -81,4 +81,6 @@ def convert_to_geojson(data):
 #     f.write('%s' % collection)
 
 
-write_from_db()
+data = write_from_db()
+
+convert_to_geojson(data)
