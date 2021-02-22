@@ -26,16 +26,18 @@ def write_from_db():
 def convert_to_geojson(data):
     for line in data:        
         # Uncomment these lines
-        # lat = row[Index of latitude column]
-        # long = row[Index of longitude column]
-        # speed = row[Index of velocity column]
+        lat = row[0]
+        long_val = row[1]
+        speed = row[2]
 
         # skip the rows where speed is missing
         if speed is None or speed == "":
             continue
      	
         try:
-            latitude, longitude = map(float, (lat, long))
+            latitude, longitude = map(float, (lat, long_val))
+            print(latitude)
+            print(longitude)
             features.append(
                 Feature(
                     geometry = Point((longitude,latitude)),
