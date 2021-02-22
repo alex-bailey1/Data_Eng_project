@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import csv, json
 from geojson import Feature, FeatureCollection, Point
+import psycopg2
 
 DBname = "postgres"
 DBuser = ""
@@ -14,10 +15,10 @@ def write_from_db():
         password=DBpwd,
 	)
     connection.autocommit = True
-    with conn.cursor() as cursor:
-        data = cursor.execute("""SELECT latitude, longitude, velocity FROM BreadCrumb;""")
-
-        print(data)
+    with connection.cursor() as cursor:
+        cursor.execute("""SELECT latitude, longitude, speed FROM BreadCrumb LIMIT 10;""")
+        print("data:")
+        print(cursor.fetchall())
         # return data
 
 
@@ -80,4 +81,4 @@ def convert_to_geojson(data):
 #     f.write('%s' % collection)
 
 
-
+write_from_db()
