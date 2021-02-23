@@ -49,7 +49,14 @@ def convert_to_geojson(data):
             )
         except ValueError:
             continue
-    #print(features)
+    
+    return features
+
+
+
+def write_to_file(features):
+    with open("data.geojson", "w")as wr_file:
+        json.dumps(features, wr_file)
 
 # features = []
 # with open('sample_data.tsv', newline='') as csvfile:
@@ -87,4 +94,6 @@ def convert_to_geojson(data):
 
 data = write_from_db()
 
-convert_to_geojson(data)
+features = convert_to_geojson(data)
+
+write_to_file(features)
