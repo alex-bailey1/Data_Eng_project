@@ -16,7 +16,7 @@ def write_from_db():
 	)
     connection.autocommit = True
     with connection.cursor() as cursor:
-        cursor.execute("""SELECT latitude, longitude, speed FROM BreadCrumb LIMIT 10;""")
+        cursor.execute("""SELECT latitude, longitude, speed FROM BreadCrumb WHERE trip_id=169124234;""")
         return cursor.fetchall()
 
 
